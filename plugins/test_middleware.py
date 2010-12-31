@@ -1,3 +1,5 @@
+import re
+
 from util import hook
 
 @hook.input
@@ -22,3 +24,31 @@ def uppercase_output(inp, method, msg):
     """
 
     return msg.upper()
+
+
+@hook.output
+def censor_words(inp, method, msg):
+    """
+    This hook can be used to filter certained censored words which may result
+    in the bot being banned from a network if they are mentioned
+    """
+
+    # note, these would normally be in the config file
+    censored = [
+        'DCC SEND',
+        '1nj3ct',
+        'startkeylogger',
+        '!coz',
+    ]
+
+    censored = map(re.escape, censored)
+
+    replacement = '[censored]'
+
+    # bad words are fine in PMs, but nowhere else
+    if method == 'pm': return msg
+
+    rx = re.compile('(%s)' % '|'.join(censored), re.IGNORECASE)
+    msg = rx.sub(replacement, msg)
+
+    return msg
