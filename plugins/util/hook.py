@@ -99,3 +99,13 @@ def regex(regex, flags=0, **kwargs):
         raise ValueError("regex decorators require a regex to match against")
     else:
         return regex_wrapper
+
+
+def input(func):
+    _hook_add(func, ['input', (fn,)])
+    return func
+
+
+def output(func):
+    _hook_add(func, ['output', (fn,)])
+    return func
