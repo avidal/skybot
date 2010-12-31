@@ -13,26 +13,39 @@ class Input(dict):
         if chan == conn.nick.lower():  # is a PM
             chan = nick
 
+        def _run_output_hooks(method, msg):
+            for func, in bot.plugs['output']:
+                msg = func(self, method, msg)
+
+            return msg
+
         def say(msg):
-            conn.msg(chan, msg)
+            msg = _run_output_hooks('say', msg)
+            if msg: conn.msg(chan, msg)
 
         def reply(msg):
+            msg = _run_output_hooks('reply', msg)
+            if not msg: return
+
             if chan == nick:  # PMs don't need prefixes
                 conn.msg(chan, msg)
             else:
                 conn.msg(chan, nick + ': ' + msg)
 
         def pm(msg):
-            conn.msg(nick, msg)
+            msg = _run_output_hooks('pm', msg)
+            if msg: conn.msg(nick, msg)
 
         def set_nick(nick):
             conn.set_nick(nick)
 
         def me(msg):
-            conn.msg(chan, "\x01%s %s\x01" % ("ACTION", msg))
+            msg = _run_output_hooks('me', msg)
+            if msg: conn.msg(chan, "\x01%s %s\x01" % ("ACTION", msg))
 
         def notice(msg):
-            conn.cmd('NOTICE', [nick, msg])
+            msg = _run_output_hooks('notice', msg)
+            if msg: conn.cmd('NOTICE', [nick, msg])
 
         dict.__init__(self, conn=conn, raw=raw, prefix=prefix, command=command,
                     params=params, nick=nick, user=user, host=host,
@@ -143,6 +156,11 @@ def match_command(command):
 
 def main(conn, out):
     inp = Input(conn, *out)
+
+    # INPUT MIDDLEWARE
+    for func, in bot.plugs['input']:
+        inp = func(inp)
+        if not inp: return
 
     # EVENTS
     for func, args in bot.events[inp.command] + bot.events['*']:

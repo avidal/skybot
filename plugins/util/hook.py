@@ -102,10 +102,10 @@ def regex(regex, flags=0, **kwargs):
 
 
 def input(func):
-    _hook_add(func, ['input', (fn,)])
+    _hook_add(func, ['input', (func,)])
     return func
 
 
 def output(func):
-    _hook_add(func, ['output', (fn,)])
+    _hook_add(func, ['output', (func,)])
     return func
